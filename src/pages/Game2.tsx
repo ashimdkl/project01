@@ -1,56 +1,107 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { getLevel } from "../levels";
+import { Link } from "react-router-dom";
 import { saveLevelProgress } from "../progress";
 
 type Cell = `${number},${number}`;
+type TriangleRotation = 0 | 90 | 180 | 270;
 
-export default function Game() {
-  const { id } = useParams();
-  const maybeLevel = getLevel(Number(id));
-  if (!maybeLevel) return <div className="center"><p>Level not found.</p></div>;
-  const level = maybeLevel;
+// Triangle shape definitions for each rotation (relative to center)
+const TRIANGLE_SHAPES = {
+  0: [
+    [0, -1],     // Top point
+    [-1, 0], [0, 0], [1, 0]  // Bottom row
+  ],
+  90: [
+    [1, 0],      // Right point  
+    [0, -1], [0, 0], [0, 1]  // Left column
+  ],
+  180: [
+    [0, 1],      // Bottom point
+    [-1, 0], [0, 0], [1, 0]  // Top row
+  ],
+  270: [
+    [-1, 0],     // Left point
+    [0, -1], [0, 0], [0, 1]  // Right column
+  ]
+} as const;
 
-  const { cols, rows, cell } = level.grid;
+// Level 2 - Paint a star pattern starting from the center
+const LEVEL_2 = {
+  id: 2,
+  name: "Paint the Star",
+  grid: { cols: 15, rows: 13, cell: 28 },
+  startPosition: { x: 7, y: 6 }, // Center of grid
+  startRotation: 0 as TriangleRotation,
+  // Star pattern - 5-pointed star
+  targetPattern: [
+    // Center
+    [7, 6],
+    // Top spike
+    [7, 5], [7, 4], [7, 3], [7, 2],
+    // Top-right spike
+    [8, 5], [9, 4], [10, 3], [11, 2],
+    // Bottom-right spike  
+    [8, 7], [9, 8], [10, 9], [11, 10],
+    // Bottom-left spike
+    [6, 7], [5, 8], [4, 9], [3, 10],
+    // Top-left spike
+    [6, 5], [5, 4], [4, 3], [3, 2],
+    // Inner star connections
+    [8, 6], [6, 6], // Horizontal
+    [7, 7], [7, 5], // Vertical (already included but for clarity)
+    // Star body points
+    [8, 4], [9, 5], [9, 7], [8, 8], [6, 8], [5, 7], [5, 5], [6, 4]
+  ] as [number, number][],
+  par: { moves: 18, timeSec: 45 }
+};
+
+export default function Game2() {
+  const { cols, rows, cell } = LEVEL_2.grid;
   const W = cols * cell;
   const H = rows * cell;
 
-  // game state
-  const [placed, setPlaced] = useState<Set<Cell>>(() => new Set());
+  // Game state
+  const [trianglePos, setTrianglePos] = useState<[number, number]>(() => [
+    LEVEL_2.startPosition.x,
+    LEVEL_2.startPosition.y
+  ]);
+  const [triangleRotation, setTriangleRotation] = useState<TriangleRotation>(LEVEL_2.startRotation);
+  const [painted, setPainted] = useState<Set<Cell>>(() => {
+    // Start with center painted
+    const startCell: Cell = `${LEVEL_2.startPosition.x},${LEVEL_2.startPosition.y}`;
+    return new Set([startCell]);
+  });
   const [moves, setMoves] = useState(0);
   const [seconds, setSeconds] = useState(0);
   const [paused, setPaused] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
-  // visuals & animations
+  // Visual effects
   const [trail, setTrail] = useState<Map<Cell, number>>(new Map());
-  const [cursor, setCursor] = useState<[number, number]>(() => [
-    level.target.x,
-    level.target.y,
-  ]);
-  const [lastAction, setLastAction] = useState<{ cell: Cell } | null>(null);
-  const [cursorGlow, setCursorGlow] = useState(false);
+  const [lastAction, setLastAction] = useState<{ type: 'move' | 'rotate' } | null>(null);
+  const [actionGlow, setActionGlow] = useState(false);
 
-  // target cells
+  // Calculate current triangle cells
+  const currentTriangleCells = useMemo(() => {
+    const [px, py] = trianglePos;
+    const shape = TRIANGLE_SHAPES[triangleRotation];
+    return shape.map(([dx, dy]) => `${px + dx},${py + dy}` as Cell);
+  }, [trianglePos, triangleRotation]);
+
+  // Target cells
   const targetSet = useMemo(() => {
     const s = new Set<Cell>();
-    const { x, y, w, h } = level.target;
-    for (let iy = y; iy < y + h; iy++) {
-      for (let ix = x; ix < x + w; ix++) s.add(`${ix},${iy}`);
-    }
+    LEVEL_2.targetPattern.forEach(([x, y]) => s.add(`${x},${y}`));
     return s;
-  }, [level]);
+  }, []);
 
-  const targetArea = targetSet.size;
-  const covered = useMemo(() => {
-    let c = 0;
-    for (const key of placed) if (targetSet.has(key)) c++;
-    return c;
-  }, [placed, targetSet]);
+  // Check win condition
+  const win = useMemo(() => {
+    if (painted.size !== targetSet.size) return false;
+    return [...painted].every(cell => targetSet.has(cell));
+  }, [painted, targetSet]);
 
-  const win = covered === targetArea;
-
-  // timer
+  // Timer
   useEffect(() => {
     if (paused || win) return;
     const t = setInterval(() => setSeconds((s) => s + 1), 1000);
@@ -61,129 +112,154 @@ export default function Game() {
   useEffect(() => {
     if (win) {
       setPaused(true);
-      
-      // Calculate stars
       let stars = 1;
-      if (moves <= level.par.moves) stars = 2;
-      if (moves <= level.par.moves && seconds <= level.par.timeSec) stars = 3;
-      
-      // Save progress
-      saveLevelProgress(Number(id), moves, seconds, stars);
+      if (moves <= LEVEL_2.par.moves) stars = 2;
+      if (moves <= LEVEL_2.par.moves && seconds <= LEVEL_2.par.timeSec) stars = 3;
+      saveLevelProgress(2, moves, seconds, stars);
     }
-  }, [win, moves, seconds, level.par, id]);
+  }, [win, moves, seconds]);
 
-  function withinTarget(ix: number, iy: number) {
-    const { x, y, w, h } = level.target;
-    return ix >= x && ix < x + w && iy >= y && iy < y + h;
+  // Check if triangle position is valid (within bounds)
+  function isValidPosition(x: number, y: number, rotation: TriangleRotation) {
+    const shape = TRIANGLE_SHAPES[rotation];
+    return shape.every(([dx, dy]) => {
+      const nx = x + dx;
+      const ny = y + dy;
+      return nx >= 0 && nx < cols && ny >= 0 && ny < rows;
+    });
   }
 
-  // paint at current position; count a move ONLY if tile is new
-  function paintAt(ix: number, iy: number) {
-    const key: Cell = `${ix},${iy}`;
-
-    // Update trail for visual effect (fade-out path)
-    setTrail((m) => {
-      const n = new Map(m);
-      // Add current position to trail
-      n.set(key, Date.now());
+  // Paint cells at current triangle position
+  function paintCurrentPosition() {
+    setPainted(prev => {
+      const newPainted = new Set(prev);
+      let newCellsPainted = 0;
       
-      // Clean up old trail entries (older than 2 seconds)
-      const cutoff = Date.now() - 2000;
-      for (const [trailKey, timestamp] of n.entries()) {
-        if (timestamp < cutoff) {
-          n.delete(trailKey);
+      currentTriangleCells.forEach(cell => {
+        if (!newPainted.has(cell)) {
+          newPainted.add(cell);
+          newCellsPainted++;
         }
-      }
+      });
       
-      return n;
-    });
-
-    if (!withinTarget(ix, iy)) {
-      // Visual feedback for invalid move
-      setCursorGlow(true);
-      setTimeout(() => setCursorGlow(false), 200);
-      return;
-    }
-
-    setPlaced((prev) => {
-      const next = new Set(prev);
-      const had = next.has(key);
-
-      if (!had) {
-        next.add(key);
-        setMoves((m) => m + 1);
-        setLastAction({ cell: key });
-        
-        // Clear action animation after a brief moment
+      // Only count as a move if new cells were painted
+      if (newCellsPainted > 0) {
+        setMoves(m => m + 1);
+        setLastAction({ type: 'move' });
         setTimeout(() => setLastAction(null), 300);
       }
-
-      return next;
+      
+      return newPainted;
     });
   }
 
-  // move cursor (keyboard or D-pad). Auto-paint at new position.
-  function move(dx: number, dy: number) {
-    setCursor(([x, y]) => {
-      const nx = Math.max(0, Math.min(cols - 1, x + dx));
-      const ny = Math.max(0, Math.min(rows - 1, y + dy));
-      paintAt(nx, ny);
-      return [nx, ny];
-    });
+  // Move triangle and auto-paint
+  function moveTriangle(dx: number, dy: number) {
+    const [x, y] = trianglePos;
+    const nx = x + dx;
+    const ny = y + dy;
+    
+    if (isValidPosition(nx, ny, triangleRotation)) {
+      setTrianglePos([nx, ny]);
+      
+      // Add to trail for visual effect
+      setTrail(m => {
+        const newTrail = new Map(m);
+        currentTriangleCells.forEach(cell => {
+          newTrail.set(cell, Date.now());
+        });
+        
+        // Clean old trail
+        const cutoff = Date.now() - 1500;
+        for (const [key, timestamp] of newTrail.entries()) {
+          if (timestamp < cutoff) {
+            newTrail.delete(key);
+          }
+        }
+        return newTrail;
+      });
+      
+      // Auto-paint at new position after state update
+      setTimeout(() => paintCurrentPosition(), 0);
+    } else {
+      // Invalid move - visual feedback
+      setActionGlow(true);
+      setTimeout(() => setActionGlow(false), 200);
+    }
   }
 
-  // Manual paint at current cursor position (spacebar)
-  function paintAtCursor() {
-    const [ix, iy] = cursor;
-    paintAt(ix, iy);
+  // Rotate triangle
+  function rotateTriangle() {
+    const newRotation = ((triangleRotation + 90) % 360) as TriangleRotation;
+    const [x, y] = trianglePos;
+    
+    if (isValidPosition(x, y, newRotation)) {
+      setTriangleRotation(newRotation);
+      setMoves(m => m + 1);
+      setLastAction({ type: 'rotate' });
+      setTimeout(() => setLastAction(null), 300);
+    } else {
+      // Invalid rotation - visual feedback
+      setActionGlow(true);
+      setTimeout(() => setActionGlow(false), 200);
+    }
   }
 
-  // Keyboard controls – attach once
+
+
+  // Keyboard controls
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (paused && !showHelp) return;
       
       const k = e.key.toLowerCase();
       if (
-        ["w", "a", "s", "d", "arrowup", "arrowleft", "arrowdown", "arrowright", " "].includes(k)
+        ["w", "a", "s", "d", "arrowup", "arrowleft", "arrowdown", "arrowright", " ", "r"].includes(k)
       ) {
         e.preventDefault();
       }
-      if (k === "w" || k === "arrowup") move(0, -1);
-      else if (k === "s" || k === "arrowdown") move(0, 1);
-      else if (k === "a" || k === "arrowleft") move(-1, 0);
-      else if (k === "d" || k === "arrowright") move(1, 0);
+      
+      if (k === "w" || k === "arrowup") moveTriangle(0, -1);
+      else if (k === "s" || k === "arrowdown") moveTriangle(0, 1);
+      else if (k === "a" || k === "arrowleft") moveTriangle(-1, 0);
+      else if (k === "d" || k === "arrowright") moveTriangle(1, 0);
+      else if (k === " ") rotateTriangle();
       else if (k === "r") reset();
-      else if (k === " ") paintAtCursor();
       else if (k === "escape") setShowHelp(false);
     }
+    
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paused, showHelp]); // Re-attach when pause state changes
+  }, [trianglePos, triangleRotation, paused, showHelp, currentTriangleCells]);
 
   function reset() {
-    setPlaced(new Set());
+    setTrianglePos([LEVEL_2.startPosition.x, LEVEL_2.startPosition.y]);
+    setTriangleRotation(LEVEL_2.startRotation);
+    const startCell: Cell = `${LEVEL_2.startPosition.x},${LEVEL_2.startPosition.y}`;
+    setPainted(new Set([startCell]));
     setMoves(0);
     setSeconds(0);
     setPaused(false);
     setTrail(new Map());
-    setCursor([level.target.x, level.target.y]);
     setLastAction(null);
   }
 
-  // Format time nicely
+  // Format time
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return mins > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `${secs}s`;
   };
 
-  // Calculate performance indicators
-  const movePerformance = moves <= level.par.moves ? 'excellent' : moves <= level.par.moves * 1.5 ? 'good' : 'needs-work';
-  const timePerformance = seconds <= level.par.timeSec ? 'excellent' : seconds <= level.par.timeSec * 1.5 ? 'good' : 'needs-work';
+  // Performance indicators
+  const movePerformance = moves <= LEVEL_2.par.moves ? 'excellent' : moves <= LEVEL_2.par.moves * 1.5 ? 'good' : 'needs-work';
+  const timePerformance = seconds <= LEVEL_2.par.timeSec ? 'excellent' : seconds <= LEVEL_2.par.timeSec * 1.5 ? 'good' : 'needs-work';
 
-  // ----- SVG primitives -----
+  // Calculate progress percentage
+  const paintedInTarget = [...painted].filter(cell => targetSet.has(cell)).length;
+  const pct = Math.round((paintedInTarget / targetSet.size) * 100);
+
+  // SVG elements
   const gridLines = useMemo(() => {
     const lines: React.ReactNode[] = [];
     for (let x = 0; x <= cols; x++) {
@@ -215,44 +291,29 @@ export default function Game() {
     return lines;
   }, [cols, rows, cell, W, H]);
 
-  const targetRect = (
+  // Target pattern rendering
+  const targetRects = LEVEL_2.targetPattern.map(([x, y], i) => (
     <rect
-      x={level.target.x * cell}
-      y={level.target.y * cell}
-      width={level.target.w * cell}
-      height={level.target.h * cell}
+      key={`target-${i}`}
+      x={x * cell}
+      y={y * cell}
+      width={cell}
+      height={cell}
       fill="url(#targetGradient)"
-      opacity={0.7}
-      rx={3}
+      opacity={0.6}
+      rx={2}
       className="target-area"
     />
-  );
+  ));
 
-  const placedRects = [...placed].map((k) => {
-    const [ix, iy] = k.split(",").map(Number);
-    const isNewAction = lastAction?.cell === k;
-    return (
-      <rect
-        key={`p-${k}`}
-        x={ix * cell + 1}
-        y={iy * cell + 1}
-        width={cell - 2}
-        height={cell - 2}
-        fill="url(#paintGradient)"
-        rx={2}
-        className={`painted-tile ${isNewAction ? 'tile-animate' : ''}`}
-      />
-    );
-  });
-
-  // Trail shows fade-out path of where user has been
+  // Trail rendering
   const trailRects = [...trail.entries()]
-    .filter(([k]) => !placed.has(k)) // Don't show trail on painted tiles
+    .filter(([k]) => !currentTriangleCells.includes(k))
     .map(([k, timestamp]) => {
       const [ix, iy] = k.split(",").map(Number);
       const age = Date.now() - timestamp;
-      const maxAge = 2000; // 2 seconds
-      const opacity = Math.max(0, (maxAge - age) / maxAge) * 0.15;
+      const maxAge = 1500;
+      const opacity = Math.max(0, (maxAge - age) / maxAge) * 0.2;
       
       return (
         <rect
@@ -270,41 +331,51 @@ export default function Game() {
       );
     });
 
-  const [cx, cy] = cursor;
-  const cursorRect = (
-    <g className="cursor-group">
+  // Painted cells rendering
+  const paintedRects = [...painted].map((k) => {
+    const [ix, iy] = k.split(",").map(Number);
+    const isInTarget = targetSet.has(k);
+    
+    return (
       <rect
-        x={cx * cell}
-        y={cy * cell}
-        width={cell}
-        height={cell}
-        fill="url(#cursorBgGradient)"
-        rx={3}
-        className="cursor-bg"
-      />
-      <rect
-        x={cx * cell + 1}
-        y={cy * cell + 1}
+        key={`painted-${k}`}
+        x={ix * cell + 1}
+        y={iy * cell + 1}
         width={cell - 2}
         height={cell - 2}
-        fill="none"
-        stroke="url(#cursorGradient)"
+        fill={isInTarget ? "url(#paintGradient)" : "url(#invalidPaintGradient)"}
+        rx={2}
+        className="painted-tile"
+      />
+    );
+  });
+
+  // Current triangle rendering
+  const triangleRects = currentTriangleCells.map((k, i) => {
+    const [ix, iy] = k.split(",").map(Number);
+    
+    return (
+      <rect
+        key={`triangle-${i}`}
+        x={ix * cell + 1}
+        y={iy * cell + 1}
+        width={cell - 2}
+        height={cell - 2}
+        fill="url(#triangleGradient)"
+        stroke="url(#triangleBorderGradient)"
         strokeWidth={2}
         rx={2}
-        pointerEvents="none"
-        className={`cursor-border ${cursorGlow ? 'cursor-error' : ''}`}
+        className={`triangle-tile ${lastAction ? 'triangle-animate' : ''} ${actionGlow ? 'triangle-error' : ''}`}
       />
-    </g>
-  );
-
-  const pct = Math.round((covered / targetArea) * 100);
+    );
+  });
 
   return (
     <div className="game-container">
       <div className="game-header">
         <div className="level-info">
-          <h1 className="level-title">{level.name}</h1>
-          <div className="level-subtitle">Fill the target area completely</div>
+          <h1 className="level-title">{LEVEL_2.name}</h1>
+          <div className="level-subtitle">Move and rotate to paint the entire star pattern</div>
         </div>
         <div className="progress-display">
           <div className="progress-ring">
@@ -340,7 +411,6 @@ export default function Game() {
       </div>
 
       <div className="game-layout">
-        {/* Game Board */}
         <div className="game-board">
           <div className="board-actions">
             <button 
@@ -364,25 +434,31 @@ export default function Game() {
             >
               <defs>
                 <linearGradient id="targetGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#dbeafe" />
-                  <stop offset="100%" stopColor="#bfdbfe" />
+                  <stop offset="0%" stopColor="#fef3c7" />
+                  <stop offset="100%" stopColor="#fcd34d" />
                 </linearGradient>
                 <linearGradient id="paintGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#3b82f6" />
                   <stop offset="50%" stopColor="#2563eb" />
                   <stop offset="100%" stopColor="#1d4ed8" />
                 </linearGradient>
-                <linearGradient id="trailGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#60a5fa" />
-                  <stop offset="100%" stopColor="#3b82f6" />
+                <linearGradient id="invalidPaintGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#ef4444" />
+                  <stop offset="50%" stopColor="#dc2626" />
+                  <stop offset="100%" stopColor="#b91c1c" />
                 </linearGradient>
-                <linearGradient id="cursorGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="triangleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#f59e0b" />
+                  <stop offset="50%" stopColor="#d97706" />
+                  <stop offset="100%" stopColor="#b45309" />
+                </linearGradient>
+                <linearGradient id="triangleBorderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#fbbf24" />
                   <stop offset="100%" stopColor="#f59e0b" />
                 </linearGradient>
-                <linearGradient id="cursorBgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="rgba(251, 191, 36, 0.1)" />
-                  <stop offset="100%" stopColor="rgba(245, 158, 11, 0.2)" />
+                <linearGradient id="trailGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#fbbf24" />
+                  <stop offset="100%" stopColor="#f59e0b" />
                 </linearGradient>
                 <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#10b981" />
@@ -390,15 +466,14 @@ export default function Game() {
                 </linearGradient>
               </defs>
               {gridLines}
-              {targetRect}
+              {targetRects}
               {trailRects}
-              {placedRects}
-              {cursorRect}
+              {paintedRects}
+              {triangleRects}
             </svg>
           </div>
         </div>
 
-        {/* Control Panel */}
         <div className="control-panel">
           {/* Stats */}
           <div className="stats-section">
@@ -412,7 +487,7 @@ export default function Game() {
                 <div className="stat-label">Moves</div>
                 <div className={`stat-value ${movePerformance}`}>
                   <span className="stat-number">{moves}</span>
-                  <span className="stat-par">/{level.par.moves}</span>
+                  <span className="stat-par">/{LEVEL_2.par.moves}</span>
                 </div>
               </div>
             </div>
@@ -427,7 +502,7 @@ export default function Game() {
                 <div className="stat-label">Time</div>
                 <div className={`stat-value ${timePerformance}`}>
                   <span className="stat-number">{formatTime(seconds)}</span>
-                  <span className="stat-par">/{formatTime(level.par.timeSec)}</span>
+                  <span className="stat-par">/{formatTime(LEVEL_2.par.timeSec)}</span>
                 </div>
               </div>
             </div>
@@ -437,17 +512,14 @@ export default function Game() {
           <div className="controls-section">
             <div className="controls-header">
               <h3>Controls</h3>
-              <div className="controls-hint">Move to paint automatically</div>
+              <div className="controls-hint">Move to paint, space to rotate</div>
             </div>
             
             <div className="movement-controls">
               <div className="direction-grid">
                 <button 
                   className="direction-btn direction-up" 
-                  onClick={() => move(0, -1)}
-                  onMouseDown={(e) => e.currentTarget.classList.add('pressed')}
-                  onMouseUp={(e) => e.currentTarget.classList.remove('pressed')}
-                  onMouseLeave={(e) => e.currentTarget.classList.remove('pressed')}
+                  onClick={() => moveTriangle(0, -1)}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
@@ -455,30 +527,24 @@ export default function Game() {
                 </button>
                 <button 
                   className="direction-btn direction-left" 
-                  onClick={() => move(-1, 0)}
-                  onMouseDown={(e) => e.currentTarget.classList.add('pressed')}
-                  onMouseUp={(e) => e.currentTarget.classList.remove('pressed')}
-                  onMouseLeave={(e) => e.currentTarget.classList.remove('pressed')}
+                  onClick={() => moveTriangle(-1, 0)}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/>
                   </svg>
                 </button>
                 <button 
-                  className="direction-btn direction-center" 
-                  onClick={paintAtCursor}
-                  title="Paint current cell"
+                  className="direction-btn direction-center triangle-rotate-btn" 
+                  onClick={rotateTriangle}
+                  title="Rotate triangle"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    <path d="M12 6v3l4-4-4-4v3c-4.42 0-8 3.58-8 8 0 1.57.46 3.03 1.24 4.26L6.7 14.8c-.45-.83-.7-1.79-.7-2.8 0-3.31 2.69-6 6-6zm6.76 1.74L17.3 9.2c.44.84.7 1.79.7 2.8 0 3.31-2.69 6-6 6v-3l-4 4 4 4v-3c4.42 0 8-3.58 8-8 0-1.57-.46-3.03-1.24-4.26z"/>
                   </svg>
                 </button>
                 <button 
                   className="direction-btn direction-right" 
-                  onClick={() => move(1, 0)}
-                  onMouseDown={(e) => e.currentTarget.classList.add('pressed')}
-                  onMouseUp={(e) => e.currentTarget.classList.remove('pressed')}
-                  onMouseLeave={(e) => e.currentTarget.classList.remove('pressed')}
+                  onClick={() => moveTriangle(1, 0)}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
@@ -486,10 +552,7 @@ export default function Game() {
                 </button>
                 <button 
                   className="direction-btn direction-down" 
-                  onClick={() => move(0, 1)}
-                  onMouseDown={(e) => e.currentTarget.classList.add('pressed')}
-                  onMouseUp={(e) => e.currentTarget.classList.remove('pressed')}
-                  onMouseLeave={(e) => e.currentTarget.classList.remove('pressed')}
+                  onClick={() => moveTriangle(0, 1)}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/>
@@ -546,13 +609,13 @@ export default function Game() {
                 <div className="help-keys">
                   <kbd>WASD</kbd> or <kbd>Arrow Keys</kbd>
                 </div>
-                <span className="help-desc">Move and paint automatically</span>
+                <span className="help-desc">Move triangle and paint automatically</span>
               </div>
               <div className="help-item">
                 <div className="help-keys">
                   <kbd>Space</kbd>
                 </div>
-                <span className="help-desc">Paint current cell</span>
+                <span className="help-desc">Rotate triangle</span>
               </div>
               <div className="help-item">
                 <div className="help-keys">
@@ -588,7 +651,7 @@ export default function Game() {
                 <span className="victory-value">{moves}</span>
               </div>
             </div>
-            <Stars moves={moves} time={seconds} par={level.par} />
+            <Stars moves={moves} time={seconds} par={LEVEL_2.par} />
             <div className="victory-actions">
               <button className="victory-btn secondary" onClick={reset}>
                 Play Again
