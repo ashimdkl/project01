@@ -1,10 +1,7 @@
 /* CanvasStyling.css - Clean Canvas-Style Geometry Tool */
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* ---------- Reset ---------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -12,17 +9,37 @@ body {
   overflow: hidden;
 }
 
-/* Main Container - Full Screen Canvas Style */
+/* Header tools layout */
+.header-right { 
+  display: flex; 
+  align-items: center; 
+  gap: 16px; 
+}
+
+.toolbar { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+}
+
+/* On narrow screens, keep the header readable */
+@media (max-width: 768px) {
+  .angle-values { display: none; }       /* hide per-vertex chips on small screens */
+  .header-right { gap: 10px; }
+  .toolbar { gap: 6px; }                 /* tighter spacing for 3 buttons */
+}
+
+/* ---------- Layout ---------- */
 .game-container {
   width: 100vw;
   height: 100vh;
   display: grid;
-  grid-template-rows: 60px 1fr 40px;
+  grid-template-rows: 60px 1fr; /* header / canvas (removed footer) */
   background: #ffffff;
   position: relative;
 }
 
-/* Top Toolbar */
+/* ---------- Header ---------- */
 .game-header {
   display: flex;
   align-items: center;
@@ -34,505 +51,322 @@ body {
   z-index: 100;
 }
 
-.tool-info {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
+.tool-info { display: flex; align-items: center; gap: 16px; }
 
 .tool-icon {
-  width: 32px;
-  height: 32px;
-  background: #3b82f6;
-  color: white;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  font-weight: 600;
+  width: 32px; height: 32px;
+  background: #3b82f6; color: white; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 600;
 }
 
-.tool-info h1 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
-}
+.tool-info h1 { font-size: 18px; font-weight: 600; color: #1e293b; }
+.tool-info p  { font-size: 13px; color: #64748b; font-weight: 500; }
 
-.tool-info p {
-  font-size: 13px;
-  color: #64748b;
-  margin: 0;
-  font-weight: 500;
-}
-
-.angle-summary {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
+.angle-summary { display: flex; align-items: center; gap: 20px; }
 
 .angle-total {
-  font-size: 14px;
-  font-weight: 600;
-  color: #059669;
-  background: #f0fdf4;
-  padding: 6px 12px;
-  border-radius: 20px;
+  font-size: 14px; font-weight: 600; color: #059669;
+  background: #f0fdf4; padding: 6px 12px; border-radius: 20px;
   border: 1px solid #bbf7d0;
 }
 
-.angle-values {
-  display: flex;
-  gap: 12px;
-}
-
+.angle-values { display: flex; gap: 12px; }
 .angle-value {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  min-width: 50px;
-  transition: all 0.15s ease;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0;
+  border-radius: 6px; min-width: 50px; transition: all 0.15s ease;
 }
+.angle-value:hover { background: #f1f5f9; border-color: #3b82f6; transform: translateY(-1px); }
+.angle-label { font-size: 11px; font-weight: 500; color: #64748b; margin-bottom: 2px; }
+.angle-number { font-size: 16px; font-weight: 700; color: #1e293b; transition: color 0.1s ease; }
 
-.angle-value:hover {
-  background: #f1f5f9;
-  border-color: #3b82f6;
-  transform: translateY(-1px);
-}
-
-.angle-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: #64748b;
-  margin-bottom: 2px;
-}
-
-.angle-number {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1e293b;
-  transition: color 0.1s ease;
-}
-
-/* Canvas Area - Takes Full Available Space */
+/* ---------- Canvas ---------- */
 .canvas-container {
-  width: 100%;
-  height: 100%;
+  width: 100%; height: 100%;
   background: #ffffff !important;
-  position: relative;
+  position: relative; z-index: 1;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
 }
 
 .geometry-canvas {
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%; height: 100%;
+  max-width: 100%; max-height: 100%;
   background: #ffffff !important;
-  cursor: default;
-  display: block;
+  cursor: default; display: block;
   border-radius: 8px;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* Bottom Status Bar */
-.instructions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
-  font-size: 12px;
-  color: #64748b;
-  height: 40px;
-}
+/* ---------- SVG styles ---------- */
+.drag-indicator { animation: pulse 0.8s ease-in-out infinite; }
 
-.status-left {
-  display: flex;
-  align-items: center;
-}
-
-.status-right {
-  display: flex;
-  align-items: center;
-}
-
-.quick-help {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.help-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: #64748b;
-}
-
-.help-key {
-  background: #e2e8f0;
-  color: #475569;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 10px;
-  font-weight: 600;
-  font-family: monospace;
-}
-
-/* Mini Legend in Status Bar */
-.mini-legend {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.legend-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  flex-shrink: 0;
-}
-
-.legend-text {
-  font-size: 10px;
-  color: #64748b;
-  font-weight: 500;
-}
-
-/* SVG Element Styling */
-.drag-indicator {
-  animation: pulse 0.8s ease-in-out infinite;
-}
-
-/* Force proper grid and text colors */
-.geometry-canvas rect[fill="url(#grid-bg)"] {
-  fill: #ffffff !important;
-}
+.geometry-canvas rect[fill="url(#grid-bg)"] { fill: #ffffff !important; }
 
 .geometry-canvas text {
-  fill: #1e293b !important;
-  font-weight: 700 !important;
-  font-size: 13px !important;
-  text-shadow: 0 0 3px rgba(255, 255, 255, 0.8), 0 0 6px rgba(255, 255, 255, 0.6);
-  dominant-baseline: central !important;
-  text-anchor: middle !important;
+  fill: #1e293b !important; font-weight: 700 !important; font-size: 13px !important;
+  text-shadow: 0 0 3px rgba(255,255,255,0.8), 0 0 6px rgba(255,255,255,0.6);
+  dominant-baseline: central !important; text-anchor: middle !important;
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 0.3;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.6;
-    transform: scale(1.05);
-  }
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50%      { opacity: 0.6; transform: scale(1.05); }
 }
 
-/* Vertex Interaction States */
-.geometry-canvas circle {
-  transition: transform 0.1s ease, filter 0.1s ease;
+.geometry-canvas circle { transition: transform 0.1s ease, filter 0.1s ease; }
+.geometry-canvas circle:hover { filter: drop-shadow(0 0 6px rgba(59,130,246,0.4)); }
+.geometry-canvas text { transition: all 0.1s ease; }
+.geometry-canvas path { transition: opacity 0.1s ease; }
+
+/* ---------- Tool Button Styles ---------- */
+.tool-btn {
+  width: 36px; height: 36px;
+  border-radius: 8px; border: 2px solid #cbd5e1;
+  background: #f1f5f9; color: #334155; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  font-size: 14px;
+  position: relative;
+}
+.tool-btn:hover { 
+  background: #e2e8f0; 
+  border-color: #94a3b8; 
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.tool-btn--active {
+  background: #3b82f6; color: #ffffff; border-color: #3b82f6;
+  box-shadow: 0 2px 6px rgba(59,130,246,0.35);
+  transform: translateY(-1px);
+}
+.tool-btn--active:hover {
+  background: #2563eb;
+  box-shadow: 0 4px 8px rgba(59,130,246,0.4);
 }
 
-.geometry-canvas circle:hover {
-  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.4));
+/* Pan tool specific styling */
+.tool-btn--pan {
+  font-size: 16px;
 }
 
-/* Smooth angle transitions */
-.geometry-canvas text {
-  transition: all 0.1s ease;
+/* ---------- Edge Chips ---------- */
+.edge-chips { display: flex; align-items: center; gap: 8px; margin-left: 8px; }
+.edge-chip { display: flex; align-items: center; gap: 8px; }
+.edge-chip .chip-bar { width: 18px; height: 3px; border-radius: 2px; }
+
+/* ---------- Canvas Cursor States ---------- */
+.geometry-canvas--drag { cursor: default; }
+.geometry-canvas--reflect { cursor: crosshair; }
+.geometry-canvas--pan { cursor: grab; }
+.geometry-canvas--pan-grabbing { cursor: grabbing; }
+
+/* ---------- Pan Mode Visual Indicators ---------- */
+.pan-indicator {
+  animation: pulse 0.8s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(16,185,129,0.3));
 }
 
-.geometry-canvas path {
-  transition: opacity 0.1s ease;
+.pan-label {
+  animation: fadeInOut 2s ease-in-out infinite;
 }
 
-/* Remove old instruction cards */
-.instruction-card,
-.legend-card {
-  display: none;
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
-/* Responsive Adjustments */
+/* ---------- Interactive Elements ---------- */
+.geometry-canvas .vertex-interactive {
+  transition: all 0.15s ease;
+}
+
+.geometry-canvas .vertex-interactive:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 6px rgba(59,130,246,0.4));
+}
+
+.geometry-canvas .edge-interactive {
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.geometry-canvas .edge-interactive:hover {
+  stroke-width: 4;
+  filter: drop-shadow(0 2px 4px rgba(59,130,246,0.3));
+}
+
+.geometry-canvas .triangle-interactive {
+  transition: all 0.15s ease;
+  cursor: grab;
+}
+
+.geometry-canvas .triangle-interactive:active {
+  cursor: grabbing;
+}
+
+/* ---------- Status and Help ---------- */
+.status-overlay {
+  position: absolute;
+  top: 80px;
+  left: 24px;
+  background: rgba(248,250,252,0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 12px;
+  color: #64748b;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 50;
+  max-width: 280px;
+}
+
+.help-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #64748b; }
+.help-key {
+  background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 3px;
+  font-size: 10px; font-weight: 600; font-family: monospace;
+}
+
+/* ---------- Responsive ---------- */
 @media (max-width: 1024px) {
-  .game-header {
-    padding: 0 16px;
-  }
-  
-  .angle-values {
-    gap: 8px;
-  }
-  
-  .angle-value {
-    padding: 6px 10px;
-    min-width: 45px;
-  }
-  
-  .instructions {
-    padding: 0 16px;
-  }
+  .game-header { padding: 0 16px; }
+  .angle-values { gap: 8px; }
+  .angle-value { padding: 6px 10px; min-width: 45px; }
 }
 
 @media (max-width: 768px) {
-  .game-container {
-    grid-template-rows: 55px 1fr 35px;
-  }
-  
-  .angle-summary {
-    gap: 12px;
-  }
-  
-  .angle-values {
-    gap: 6px;
-  }
-  
-  .angle-value {
-    padding: 6px 8px;
-    min-width: 40px;
-  }
-  
-  .angle-number {
-    font-size: 14px;
-  }
-  
-  .tool-info h1 {
-    font-size: 16px;
-  }
-  
-  .tool-info p {
-    display: none; /* Hide subtitle on small screens */
-  }
-  
-  .instructions {
-    font-size: 11px;
-    height: 35px;
-  }
-  
-  .quick-help {
-    gap: 12px;
-  }
-  
-  .mini-legend {
-    gap: 8px;
-  }
+  .game-container { grid-template-rows: 55px 1fr; }
+  .angle-summary { gap: 12px; }
+  .angle-values { gap: 6px; }
+  .angle-value { padding: 6px 8px; min-width: 40px; }
+  .angle-number { font-size: 14px; }
+  .tool-info h1 { font-size: 16px; }
+  .tool-info p { display: none; }
+  .tool-btn { width: 32px; height: 32px; font-size: 12px; }
+  .tool-btn--pan { font-size: 14px; }
+  .status-overlay { top: 65px; left: 16px; max-width: 240px; }
 }
 
 @media (max-width: 480px) {
-  .game-container {
-    grid-template-rows: 50px 1fr 32px;
-  }
-  
-  .angle-summary {
-    gap: 8px;
-  }
-  
-  .angle-total {
-    font-size: 12px;
-    padding: 4px 8px;
-  }
-  
-  .angle-value {
-    padding: 4px 6px;
-    min-width: 36px;
-  }
-  
-  .angle-number {
-    font-size: 13px;
-  }
-  
-  .mini-legend {
-    display: none; /* Hide on very small screens */
-  }
-  
-  .tool-info gap {
-    gap: 12px;
-  }
-  
-  .instructions {
-    height: 32px;
-    font-size: 10px;
-  }
+  .game-container { grid-template-rows: 50px 1fr; }
+  .angle-summary { gap: 8px; }
+  .angle-total { font-size: 12px; padding: 4px 8px; }
+  .angle-value { padding: 4px 6px; min-width: 36px; }
+  .angle-number { font-size: 13px; }
+  .tool-btn { width: 30px; height: 30px; }
+  .toolbar { gap: 4px; }
+  .status-overlay { top: 60px; left: 12px; max-width: 200px; font-size: 11px; }
 }
 
-/* Touch Device Optimizations */
+/* ---------- Touch Devices ---------- */
 @media (hover: none) and (pointer: coarse) {
-  .geometry-canvas {
-    cursor: default;
-  }
+  .geometry-canvas { cursor: default; }
+  .angle-value { padding: 10px 14px; }
+  .geometry-canvas circle { r: 16px; } /* larger touch targets */
+  .tool-btn { width: 42px; height: 42px; }
+  .tool-btn--pan { font-size: 18px; }
   
-  .angle-value {
-    padding: 10px 14px; /* Larger touch targets */
+  /* Remove hover effects on touch */
+  .tool-btn:hover { 
+    background: #f1f5f9; 
+    border-color: #cbd5e1; 
+    transform: none;
+    box-shadow: none;
   }
-  
-  .geometry-canvas circle {
-    /* Larger touch targets for vertices */
-    r: 14px;
+  .tool-btn--active:hover {
+    background: #3b82f6;
+    box-shadow: 0 2px 6px rgba(59,130,246,0.35);
   }
 }
 
-/* High Contrast Mode */
+/* ---------- High Contrast Mode ---------- */
 @media (prefers-contrast: high) {
-  .game-header,
-  .canvas-container,
-  .instructions {
-    border-color: #000000;
-  }
-  
-  .angle-value {
-    border-color: #000000;
-  }
-  
-  .help-key {
-    background: #000000;
-    color: #ffffff;
-  }
-  
-  .geometry-canvas {
-    border: 2px solid #000000;
-  }
+  .game-header, .canvas-container { border-color: #000000; }
+  .angle-value { border-color: #000000; }
+  .help-key { background: #000000; color: #ffffff; }
+  .geometry-canvas { border: 2px solid #000000; }
+  .tool-btn { border-color: #000000; }
+  .tool-btn--active { background: #000000; border-color: #000000; }
+  .status-overlay { border-color: #000000; background: #ffffff; }
 }
 
-/* Reduced Motion */
+/* ---------- Reduced Motion ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .drag-indicator {
-    animation: none;
-  }
-  
-  * {
-    transition: none !important;
-  }
-  
-  .geometry-canvas * {
-    transition: none !important;
-  }
+  .drag-indicator, .pan-indicator, .pan-label { animation: none; }
+  * { transition: none !important; }
+  .geometry-canvas * { transition: none !important; }
 }
 
-/* Focus States for Accessibility */
-.tool-icon:focus,
-.angle-value:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
+/* ---------- Focus States ---------- */
+.tool-icon:focus, .angle-value:focus, .tool-btn:focus { 
+  outline: 2px solid #3b82f6; 
+  outline-offset: 2px; 
+}
+.geometry-canvas:focus { 
+  outline: 2px solid #3b82f6; 
+  outline-offset: -2px; 
 }
 
-.geometry-canvas:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: -2px;
-}
-
-/* Dark Mode Support */
+/* ---------- Dark Mode ---------- */
 @media (prefers-color-scheme: dark) {
-  body {
-    background: #0f172a;
+  body { background: #0f172a; }
+  .game-container { background: #1e293b; }
+  .game-header { background: #1e293b; border-bottom-color: #334155; color: #f8fafc; }
+  .tool-info h1 { color: #f8fafc; }
+  .tool-info p  { color: #94a3b8; }
+  .canvas-container { background: #0f172a; }
+  .geometry-canvas { 
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); 
   }
+  .angle-value { background: #334155; border-color: #475569; color: #f8fafc; }
+  .angle-value:hover { background: #475569; border-color: #3b82f6; }
+  .angle-number { color: #f8fafc; }
+  .angle-total { background: #064e3b; color: #6ee7b7; border-color: #047857; }
+  .help-key { background: #475569; color: #f8fafc; }
+
+  /* Dark mode tool buttons */
+  .tool-btn { background: #1f2937; color: #e5e7eb; border-color: #475569; }
+  .tool-btn:hover { background: #273449; border-color: #64748b; }
+  .tool-btn--active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
   
-  .game-container {
-    background: #1e293b;
-  }
-  
-  .game-header {
-    background: #1e293b;
-    border-bottom-color: #334155;
-    color: #f8fafc;
-  }
-  
-  .tool-info h1 {
-    color: #f8fafc;
-  }
-  
-  .tool-info p {
-    color: #94a3b8;
-  }
-  
-  .canvas-container {
-    background: #0f172a;
-  }
-  
-  .geometry-canvas {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
-  }
-  
-  .instructions {
-    background: #1e293b;
-    border-top-color: #334155;
-    color: #94a3b8;
-  }
-  
-  .angle-value {
-    background: #334155;
-    border-color: #475569;
-    color: #f8fafc;
-  }
-  
-  .angle-value:hover {
-    background: #475569;
-    border-color: #3b82f6;
-  }
-  
-  .angle-number {
-    color: #f8fafc;
-  }
-  
-  .angle-total {
-    background: #064e3b;
-    color: #6ee7b7;
-    border-color: #047857;
-  }
-  
-  .help-key {
-    background: #475569;
-    color: #f8fafc;
-  }
-  
-  .legend-text {
-    color: #94a3b8;
+  /* Dark mode status overlay */
+  .status-overlay { 
+    background: rgba(30,41,59,0.95); 
+    border-color: #475569; 
+    color: #94a3b8; 
   }
 }
 
-/* Performance Optimizations */
-.geometry-canvas {
-  will-change: transform;
-  contain: layout style paint;
+/* ---------- Performance ---------- */
+.geometry-canvas { 
+  will-change: transform; 
+  contain: layout style paint; 
+}
+.geometry-canvas * { 
+  vector-effect: non-scaling-stroke; 
 }
 
-.geometry-canvas * {
-  vector-effect: non-scaling-stroke;
-}
-
-/* Print Styles */
+/* ---------- Print Styles ---------- */
 @media print {
-  .game-container {
-    height: auto;
-    grid-template-rows: auto 600px auto;
-    background: white;
+  .game-container { 
+    height: auto; 
+    grid-template-rows: auto 600px; 
+    background: #fff; 
   }
-  
-  .canvas-container {
-    height: 600px;
-    border: 1px solid #000;
+  .canvas-container { 
+    height: 600px; 
+    border: 1px solid #000; 
   }
-  
-  .instructions {
-    page-break-before: avoid;
-    background: white;
-    color: black;
+  .game-header { 
+    background: #fff; 
+    color: #000; 
+    box-shadow: none; 
+    page-break-inside: avoid;
   }
-  
-  .game-header {
-    background: white;
-    color: black;
-  }
+  .status-overlay { display: none; }
+  .toolbar { display: none; }
 }
