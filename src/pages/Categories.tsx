@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+/* same as before, too lazy tto find proper icons rn, need to replace these random emojis temporary values here. similar in splash.tsx page */
 export default function Categories() {
   const categories = [
     {

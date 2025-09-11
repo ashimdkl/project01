@@ -1,0 +1,265 @@
+/* LevelCreatorStyling.css - Clean Level Creator Styles */
+
+/* ---------- Reset ---------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+/* ---------- Layout ---------- */
+.level-creator {
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: 60px 1fr 50px;
+  background: #ffffff;
+  position: relative;
+}
+
+/* ---------- Header ---------- */
+.level-creator__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.level-creator__title { display: flex; align-items: center; gap: 16px; }
+
+.level-creator__icon {
+  width: 32px; height: 32px;
+  background: #667eea; color: white; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 600;
+}
+
+.level-creator__title h1 { font-size: 18px; font-weight: 600; color: #1e293b; }
+.level-creator__title p  { font-size: 13px; color: #64748b; font-weight: 500; }
+
+.level-creator__controls { display: flex; align-items: center; gap: 12px; }
+
+/* ---------- Buttons ---------- */
+.level-creator__btn {
+  padding: 8px 16px; border-radius: 6px; border: 2px solid;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+
+.level-creator__btn--primary {
+  background: #10b981; border-color: #10b981; color: white;
+}
+.level-creator__btn--primary:hover {
+  background: #059669; border-color: #059669;
+  transform: translateY(-1px); box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+.level-creator__btn--secondary {
+  background: #f1f5f9; border-color: #cbd5e1; color: #475569;
+}
+.level-creator__btn--secondary:hover {
+  background: #e2e8f0; border-color: #94a3b8; transform: translateY(-1px);
+}
+
+.level-creator__btn--accent {
+  background: #3b82f6; border-color: #3b82f6; color: white;
+}
+.level-creator__btn--accent:hover {
+  background: #2563eb; border-color: #2563eb;
+  transform: translateY(-1px); box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+/* ---------- Clear Palette Button ---------- */
+.level-creator__btn--danger {
+  background: #ef4444; 
+  border-color: #ef4444; 
+  color: white;
+}
+
+.level-creator__btn--danger:hover {
+  background: #dc2626; 
+  border-color: #dc2626;
+  transform: translateY(-1px); 
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+/* ---------- Workspace ---------- */
+.level-creator__workspace {
+  display: flex; height: 100%; position: relative; overflow: hidden;
+}
+
+.level-creator__canvas-container {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  background: #ffffff; position: relative; padding: 20px;
+}
+
+.level-creator__canvas {
+  border: 1px solid #e2e8f0; border-radius: 8px;
+  background: white; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  cursor: default; max-width: 100%; max-height: 100%;
+}
+
+/* ---------- Shape Palette ---------- */
+.level-creator__palette {
+  width: 280px; background: #ffffff; border-left: 1px solid #e2e8f0;
+  display: flex; flex-direction: column; z-index: 50;
+}
+
+.level-creator__palette-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;
+}
+
+.level-creator__palette-header h3 {
+  font-size: 16px; font-weight: 600; color: #1e293b; margin: 0;
+}
+
+.level-creator__palette-close {
+  width: 24px; height: 24px; border: none; background: #e2e8f0;
+  color: #64748b; border-radius: 4px; cursor: pointer;
+  font-size: 16px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s ease;
+}
+.level-creator__palette-close:hover { background: #cbd5e1; color: #475569; }
+
+.level-creator__palette-shapes {
+  padding: 20px; display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; overflow-y: auto;
+}
+
+.level-creator__palette-shape {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 16px 12px; background: #f8fafc; border: 1px solid #e2e8f0;
+  border-radius: 6px; cursor: grab; transition: all 0.15s ease;
+  touch-action: none;
+}
+.level-creator__palette-shape:hover {
+  background: #f1f5f9; border-color: #cbd5e1; transform: translateY(-1px);
+}
+.level-creator__palette-shape:active { cursor: grabbing; transform: scale(0.98); }
+
+.level-creator__palette-shape span {
+  font-size: 12px; font-weight: 600; color: #64748b; text-align: center;
+}
+
+/* ---------- Status Bar ---------- */
+.level-creator__status {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; background: #f8fafc; border-top: 1px solid #e2e8f0;
+  font-size: 13px; color: #64748b; min-height: 50px;
+}
+
+.level-creator__status-info { display: flex; align-items: center; gap: 4px; }
+.level-creator__status-info strong { color: #1e293b; font-weight: 600; }
+
+/* ---------- Enhanced Status Messages ---------- */
+.level-creator__play-instructions {
+  font-weight: 500; 
+  color: #059669; 
+  background: #f0fdf4;
+  padding: 6px 12px; 
+  border-radius: 6px; 
+  border: 1px solid #bbf7d0;
+  font-size: 12px;
+}
+
+.level-creator__creator-instructions {
+  color: #3b82f6; 
+  background: #eff6ff; 
+  border-color: #bfdbfe;
+  font-weight: 500; 
+  padding: 6px 12px; 
+  border-radius: 6px; 
+  border: 1px solid #bfdbfe;
+  font-size: 12px;
+}
+
+/* ---------- Canvas Interactions ---------- */
+.level-creator__canvas path { transition: all 0.15s ease; }
+.level-creator__canvas path:hover { filter: brightness(1.05); }
+.level-creator__canvas path[style*="cursor: grab"]:active { cursor: grabbing; }
+.level-creator__canvas path[stroke="#3B82F6"] {
+  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.4));
+}
+
+/* ---------- Snap Guide Animations ---------- */
+.level-creator__canvas line[stroke="#10b981"] {
+  animation: snapGuidePulse 0.3s ease-in-out;
+}
+
+@keyframes snapGuidePulse {
+  0% { opacity: 0; }
+  50% { opacity: 0.9; }
+  100% { opacity: 0.7; }
+}
+
+/* ---------- Enhanced Shape Highlighting ---------- */
+.level-creator__canvas path[stroke="#3B82F6"][stroke-width="3"] {
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
+  animation: selectedShapePulse 2s ease-in-out infinite;
+}
+
+@keyframes selectedShapePulse {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5)); }
+  50% { filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.7)); }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .level-creator { grid-template-rows: 55px 1fr 45px; }
+  .level-creator__header { padding: 0 16px; }
+  .level-creator__title h1 { font-size: 16px; }
+  .level-creator__title p { display: none; }
+  .level-creator__controls { gap: 8px; }
+  .level-creator__btn { padding: 6px 12px; font-size: 13px; }
+  .level-creator__palette { width: 240px; }
+  .level-creator__palette-shapes { grid-template-columns: 1fr; gap: 12px; }
+  .level-creator__status { padding: 0 16px; font-size: 12px; }
+  
+  /* Improved Mobile Responsiveness for New Features */
+  .level-creator__play-instructions,
+  .level-creator__creator-instructions {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+  
+  .level-creator__btn--danger {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .level-creator__palette {
+    position: absolute; right: 0; top: 0; height: 100%; width: 200px;
+    transform: translateX(100%); transition: transform 0.3s ease;
+  }
+  .level-creator__palette--open { transform: translateX(0); }
+}
+
+/* ---------- Touch Devices ---------- */
+@media (hover: none) and (pointer: coarse) {
+  .level-creator__palette-shape:hover {
+    background: #f8fafc; border-color: #e2e8f0; transform: none;
+  }
+  .level-creator__btn:hover { transform: none; box-shadow: none; }
+  .level-creator__canvas path:hover { filter: none; }
+}
+
+/* ---------- Focus States ---------- */
+.level-creator__btn:focus, .level-creator__palette-close:focus,
+.level-creator__palette-shape:focus {
+  outline: 2px solid #3b82f6; outline-offset: 2px;
+}
+
+/* ---------- Performance ---------- */
+.level-creator__canvas { will-change: transform; contain: layout style paint; }
+.level-creator__canvas * { vector-effect: non-scaling-stroke; }

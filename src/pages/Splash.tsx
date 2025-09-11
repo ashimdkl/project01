@@ -34,10 +34,10 @@ export default function Splash() {
           </div>
         </div>
       </div>
-      
+      {/* idk if i like this whole emoji as the buttons but ofr now keep this cause i dont have time to find proper svg assosciated with this [COME BACK TO THIS ASHIM] */}
       <div className="features-section">
         <div className="feature-card">
-          <div className="feature-icon">🧩</div>
+          <div className="feature-icon">🧩</div> 
           <h3>Spatial Reasoning</h3>
           <p>some typa motive on how our games help their skills in this?</p>
         </div>

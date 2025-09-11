@@ -10,7 +10,7 @@ export const LEVELS: Level[] = [
   {
     id: 1,
     name: "Paint the Box",
-    // fewer cells, bigger pixels for a chunky Game Boy feel
+    // fewer cells, bigger pixels for a chunky Game Boy feel idk if i like this for later or not, but for now keep this shit simple
     grid: { cols: 16, rows: 16, cell: 28 },
     target: { x: 5, y: 5, w: 6, h: 6 }, // 6x6 = 36 tiles
     par: { moves: 36, timeSec: 30 }
